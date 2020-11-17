@@ -81,7 +81,7 @@ def optimize_x(pt):
                 pt.x_ctt.data = torch.clamp(pt.x_ctt.data, 0, 1)
                 pt.x_ctt.data[:, :, -1] = torch.clamp(pt.x_ctt.data[:, :, -1], 0, 0)
                 pt.x_color.data = torch.clamp(pt.x_color.data, 0, 1)
-                pt.x_alpha.data = torch.clamp(pt.x_alpha.data, 0, 1)
+                pt.x_alpha.data = torch.clamp(pt.x_alpha.data, 1, 1)
 
                 pt._forward_pass()
                 pt._backward_x()
@@ -89,7 +89,7 @@ def optimize_x(pt):
                 pt.x_ctt.data = torch.clamp(pt.x_ctt.data, 0, 1)
                 pt.x_ctt.data[:, :, -1] = torch.clamp(pt.x_ctt.data[:, :, -1], 0, 0)
                 pt.x_color.data = torch.clamp(pt.x_color.data, 0, 1)
-                pt.x_alpha.data = torch.clamp(pt.x_alpha.data, 0, 1)
+                pt.x_alpha.data = torch.clamp(pt.x_alpha.data, 1, 1)
 
                 pt._drawing_step_states()
 
