@@ -117,7 +117,7 @@ Also, please note that in the current version, the style transfer are not suppor
 ![](./gallery/8bitart.jpg)
 
 ```bash
-python demo_8bitart.py --img_path ./test_images/monalisa.jpg --canvas_color 'black' --max_m_strokes 500 --max_divide 5
+python demo_8bitart.py --img_path ./test_images/monalisa.jpg --canvas_color 'black' --max_m_strokes 300 --max_divide 4
 ```
 
 
