@@ -71,7 +71,7 @@ def optimize_x(pt):
         pt.step_id = 0
         for pt.anchor_id in range(0, pt.m_strokes_per_block):
             pt.stroke_sampler(pt.anchor_id)
-            iters_per_stroke = 20
+            iters_per_stroke = 40
             for i in range(iters_per_stroke):
                 pt.G_pred_canvas = CANVAS_tmp
 
