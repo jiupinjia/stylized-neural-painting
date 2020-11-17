@@ -91,7 +91,7 @@ python demo.py --img_path ./test_images/diamond.jpg --canvas_color 'black' --max
 ```
 
 
-#### Style Transfer
+#### Style transfer
 
 ![](./gallery/nst.jpg)
 
@@ -111,6 +111,14 @@ You may also specify the --transfer_mode to switch the transfer mode (0: transfe
 
 Also, please note that in the current version, the style transfer are not supported by the progressive rendering mode. We will be working on this feature in the near future. 
 
+
+#### Generate 8-bit graphic artworks
+
+![](./gallery/8bitart.jpg)
+
+```bash
+python demo_8bitart.py --img_path ./test_images/monalisa.jpg --canvas_color 'black' --max_m_strokes 500 --max_divide 5
+```
 
 
 ## Google Colab
