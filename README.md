@@ -107,7 +107,7 @@ python demo.py --img_path ./test_images/sunflowers.jpg --canvas_color 'white' --
 python demo_nst.py --renderer oilpaintbrush --vector_file ./output/sunflowers_strokes.npz --style_img_path ./style_images/fire.jpg --content_img_path ./test_images/sunflowers.jpg --canvas_color 'white' --renderer_checkpoint_dir checkpoints_G_oilpaintbrush --transfer_mode 1
 ```
 
-You may also specify the --transfer_mode to switch the transfer mode (0: transfer color only, 1: transfer both color and texture)
+You may also specify the --transfer_mode (0: transfer color only, 1: transfer both color and texture)
 
 Also, please note that in the current version, the style transfer are not supported by the progressive rendering mode. We will be working on this feature in the near future. 
 
@@ -119,6 +119,15 @@ Also, please note that in the current version, the style transfer are not suppor
 ```bash
 python demo_8bitart.py --img_path ./test_images/monalisa.jpg --canvas_color 'black' --max_m_strokes 300 --max_divide 4
 ```
+
+#### Running through SSH
+
+If you would like to run remotely through ssh and do not have something like X-display installed, you will need --disable_preview to turn off cv2.imshow on the run.
+
+```bash
+python demo_prog.py --disable_preview
+```
+
 
 
 ## Google Colab

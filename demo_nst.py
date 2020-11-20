@@ -35,6 +35,8 @@ parser.add_argument('--lr', type=float, default=0.005,
                     help='learning rate for stroke searching (default: 0.005)')
 parser.add_argument('--output_dir', type=str, default=r'./output', metavar='str',
                     help='dir to save style transfer results (default: ./output)')
+parser.add_argument('--disable_preview', action='store_true', default=False,
+                    help='disable cv2.imshow, for running remotely without x-display')
 args = parser.parse_args()
 
 

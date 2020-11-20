@@ -108,6 +108,18 @@ class PainterBase():
             plt.imsave(file_name + '_rendered_stroke_' + str((i+1)).zfill(4) +
                        '.png', self.final_rendered_images[i])
 
+        print('saving animated result...')
+        file_name = os.path.join(
+            self.output_dir, self.img_path.split('/')[-1][:-4]+'_animated.mp4')
+        video_writer = cv2.VideoWriter(
+            file_name, cv2.VideoWriter_fourcc(*'MP4V'), 40,
+            (self.args.canvas_size, self.args.canvas_size))
+        for i in range(len(self.final_rendered_images)):
+            frame = (self.final_rendered_images[i][:, :, ::-1] * 255.).astype(np.uint8)
+            video_writer.write(frame)
+
+
+
 
     def _normalize_strokes(self, v):
 
@@ -248,9 +260,12 @@ class Painter(PainterBase):
                  (self.anchor_id+1)*self.m_grid*self.m_grid,
                  self.max_m_strokes))
         vis2 = utils.patches2img(self.G_final_pred_canvas, self.m_grid).clip(min=0, max=1)
-        cv2.imshow('G_pred', vis2[:,:,::-1])
-        cv2.imshow('input', self.img_[:, :, ::-1])
-        cv2.waitKey(1)
+        if self.args.disable_preview:
+            pass
+        else:
+            cv2.imshow('G_pred', vis2[:,:,::-1])
+            cv2.imshow('input', self.img_[:, :, ::-1])
+            cv2.waitKey(1)
 
     def _render_on_grids(self, v):
 
@@ -325,9 +340,12 @@ class ProgressivePainter(PainterBase):
                  self.m_grid, self.max_divide,
                  self.anchor_id, self.m_strokes_per_block))
         vis2 = utils.patches2img(self.G_final_pred_canvas, self.m_grid).clip(min=0, max=1)
-        cv2.imshow('G_pred', vis2[:,:,::-1])
-        cv2.imshow('input', self.img_[:, :, ::-1])
-        cv2.waitKey(1)
+        if self.args.disable_preview:
+            pass
+        else:
+            cv2.imshow('G_pred', vis2[:,:,::-1])
+            cv2.imshow('input', self.img_[:, :, ::-1])
+            cv2.waitKey(1)
 
 
 
@@ -338,7 +356,11 @@ class NeuralStyleTransfer(PainterBase):
 
         self._style_loss = loss.VGGStyleLoss(transfer_mode=args.transfer_mode, resize=True)
 
-        npzfile = np.load(args.vector_file)
+        print('loading pre-generated vector file...')
+        if os.path.exists(args.vector_file) is False:
+            exit('vector file does not exist, pls check --vector_file, or run demo.py fist')
+        else:
+            npzfile = np.load(args.vector_file)
 
         self.x_ctt = torch.tensor(npzfile['x_ctt']).to(device)
         self.x_color = torch.tensor(npzfile['x_color']).to(device)
@@ -363,9 +385,12 @@ class NeuralStyleTransfer(PainterBase):
         print('running style transfer... iteration step %d, G_loss: %.5f, step_psnr: %.5f'
               % (self.step_id, self.G_loss.item(), acc))
         vis2 = utils.patches2img(self.G_final_pred_canvas, self.m_grid).clip(min=0, max=1)
-        cv2.imshow('G_pred', vis2[:,:,::-1])
-        cv2.imshow('input', self.img_[:, :, ::-1])
-        cv2.waitKey(1)
+        if self.args.disable_preview:
+            pass
+        else:
+            cv2.imshow('G_pred', vis2[:,:,::-1])
+            cv2.imshow('input', self.img_[:, :, ::-1])
+            cv2.waitKey(1)
 
 
     def _backward_x_sty(self):
