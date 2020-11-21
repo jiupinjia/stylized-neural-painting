@@ -22,7 +22,7 @@ parser.add_argument('--transfer_mode', type=int, default=1, metavar='N',
 parser.add_argument('--canvas_color', type=str, default='black', metavar='str',
                     help='canvas_color: [black, white] (default black)')
 parser.add_argument('--canvas_size', type=int, default=512, metavar='str',
-                    help='size of the canvas for stroke rendering')
+                    help='size ( max(w, h) ) of the canvas for stroke rendering')
 parser.add_argument('--beta_L1', type=float, default=1.0,
                     help='weight for L1 loss (default: 1.0)')
 parser.add_argument('--beta_sty', type=float, default=0.5,
@@ -87,13 +87,7 @@ def optimize_x(pt):
     print('saving style transfer result...')
     v_n = pt._normalize_strokes(pt.x)
     pt.final_rendered_images = pt._render_on_grids(v_n)
-
-    file_dir = os.path.join(
-        args.output_dir, args.content_img_path.split('/')[-1][:-4])
-    plt.imsave(file_dir + '_style_img_' +
-               args.style_img_path.split('/')[-1][:-4] + '.png', pt.style_img_)
-    plt.imsave(file_dir + '_style_transfer_' +
-               args.style_img_path.split('/')[-1][:-4] + '.png', pt.final_rendered_images[-1])
+    pt._save_style_transfer_images()
 
 
 if __name__ == '__main__':

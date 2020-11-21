@@ -47,6 +47,7 @@ class PainterBase():
         self._sinkhorn_loss = loss.SinkhornLoss(epsilon=0.01, niter=5, normalize=False)
 
         # some other vars to be initialized in child classes
+        self.input_aspect_ratio = None
         self.img_path = None
         self.img_batch = None
         self.img_ = None
@@ -100,22 +101,33 @@ class PainterBase():
 
 
     def _save_rendered_images(self):
+
+        if self.input_aspect_ratio < 1:
+            out_h = int(self.args.canvas_size * self.input_aspect_ratio)
+            out_w = self.args.canvas_size
+        else:
+            out_h = self.args.canvas_size
+            out_w = int(self.args.canvas_size / self.input_aspect_ratio)
+
         print('saving rendered images...')
         file_name = os.path.join(
             self.output_dir, self.img_path.split('/')[-1][:-4])
-        plt.imsave(file_name+'_input.png', self.img_)
+        out_img = cv2.resize(self.img_, (out_w, out_h), cv2.INTER_AREA)
+        plt.imsave(file_name+'_input.png', out_img)
         for i in range(len(self.final_rendered_images)):
+            out_img = cv2.resize(self.final_rendered_images[i], (out_w, out_h), cv2.INTER_AREA)
             plt.imsave(file_name + '_rendered_stroke_' + str((i+1)).zfill(4) +
-                       '.png', self.final_rendered_images[i])
+                       '.png', out_img)
 
         print('saving animated result...')
         file_name = os.path.join(
             self.output_dir, self.img_path.split('/')[-1][:-4]+'_animated.mp4')
         video_writer = cv2.VideoWriter(
             file_name, cv2.VideoWriter_fourcc(*'MP4V'), 40,
-            (self.args.canvas_size, self.args.canvas_size))
+            (out_w, out_h))
         for i in range(len(self.final_rendered_images)):
             frame = (self.final_rendered_images[i][:, :, ::-1] * 255.).astype(np.uint8)
+            frame = cv2.resize(frame, (out_w, out_h), cv2.INTER_AREA)
             video_writer.write(frame)
 
 
@@ -244,7 +256,8 @@ class Painter(PainterBase):
         self.img_path = args.img_path
         self.img_ = cv2.imread(args.img_path, cv2.IMREAD_COLOR)
         self.img_ = cv2.cvtColor(self.img_, cv2.COLOR_BGR2RGB).astype(np.float32) / 255.
-        self.img_ = cv2.resize(self.img_, (128 * args.m_grid, 128 * args.m_grid))
+        self.input_aspect_ratio = self.img_.shape[0] / self.img_.shape[1]
+        self.img_ = cv2.resize(self.img_, (128 * args.m_grid, 128 * args.m_grid), cv2.INTER_AREA)
 
         self.m_strokes_per_block = int(args.max_m_strokes / (args.m_grid * args.m_grid))
 
@@ -303,7 +316,8 @@ class ProgressivePainter(PainterBase):
         self.img_path = args.img_path
         self.img_ = cv2.imread(args.img_path, cv2.IMREAD_COLOR)
         self.img_ = cv2.cvtColor(self.img_, cv2.COLOR_BGR2RGB).astype(np.float32) / 255.
-        self.img_ = cv2.resize(self.img_, (128 * args.max_divide, 128 * args.max_divide))
+        self.input_aspect_ratio = self.img_.shape[0] / self.img_.shape[1]
+        self.img_ = cv2.resize(self.img_, (128 * args.max_divide, 128 * args.max_divide), cv2.INTER_AREA)
 
 
 
@@ -338,7 +352,7 @@ class ProgressivePainter(PainterBase):
         print('iteration step %d, G_loss: %.5f, step_acc: %.5f, grid_scale: %d / %d, strokes: %d / %d'
               % (self.step_id, self.G_loss.item(), acc,
                  self.m_grid, self.max_divide,
-                 self.anchor_id, self.m_strokes_per_block))
+                 self.anchor_id + 1, self.m_strokes_per_block))
         vis2 = utils.patches2img(self.G_final_pred_canvas, self.m_grid).clip(min=0, max=1)
         if self.args.disable_preview:
             pass
@@ -353,6 +367,8 @@ class NeuralStyleTransfer(PainterBase):
 
     def __init__(self, args):
         super(NeuralStyleTransfer, self).__init__(args=args)
+
+        self.args = args
 
         self._style_loss = loss.VGGStyleLoss(transfer_mode=args.transfer_mode, resize=True)
 
@@ -371,7 +387,8 @@ class NeuralStyleTransfer(PainterBase):
 
         img_ = cv2.imread(args.content_img_path, cv2.IMREAD_COLOR)
         img_ = cv2.cvtColor(img_, cv2.COLOR_BGR2RGB).astype(np.float32) / 255.
-        self.img_ = cv2.resize(img_, (128*self.m_grid, 128*self.m_grid))
+        self.input_aspect_ratio = img_.shape[0] / img_.shape[1]
+        self.img_ = cv2.resize(img_, (128*self.m_grid, 128*self.m_grid), cv2.INTER_AREA)
         self.img_batch = utils.img2patches(self.img_, self.m_grid).to(device)
 
         style_img = cv2.imread(args.style_img_path, cv2.IMREAD_COLOR)
@@ -420,3 +437,24 @@ class NeuralStyleTransfer(PainterBase):
         return rendered_imgs
 
 
+    def _save_style_transfer_images(self):
+
+        if self.input_aspect_ratio < 1:
+            out_h = int(self.args.canvas_size * self.input_aspect_ratio)
+            out_w = self.args.canvas_size
+        else:
+            out_h = self.args.canvas_size
+            out_w = int(self.args.canvas_size / self.input_aspect_ratio)
+
+        print('saving style transfer results...')
+
+        file_dir = os.path.join(
+            self.output_dir, self.args.content_img_path.split('/')[-1][:-4])
+
+        out_img = cv2.resize(self.style_img_, (out_w, out_h), cv2.INTER_AREA)
+        plt.imsave(file_dir + '_style_img_' +
+                   self.args.style_img_path.split('/')[-1][:-4] + '.png', out_img)
+
+        out_img = cv2.resize(self.final_rendered_images[-1], (out_w, out_h), cv2.INTER_AREA)
+        plt.imsave(file_dir + '_style_transfer_' +
+                   self.args.style_img_path.split('/')[-1][:-4] + '.png', out_img)
