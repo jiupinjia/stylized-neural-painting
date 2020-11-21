@@ -16,7 +16,7 @@ def _normalize(x, width):
 
 class Renderer():
 
-    def __init__(self, renderer='bezier', CANVAS_WIDTH=128, train=False, canvas_color='black'):
+    def __init__(self, renderer='oilpaintbrush', CANVAS_WIDTH=128, train=False, canvas_color='black'):
 
         self.CANVAS_WIDTH = CANVAS_WIDTH
         self.renderer = renderer
