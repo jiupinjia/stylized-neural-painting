@@ -235,10 +235,10 @@ def rotate_pt(pt, rotate_center, theta, return_int=True):
 
 def img2patches(img, m_grid, to_tensor=True):
     # input img: h, w, 3 (np.float32)
-    # output patches: N, 3, 128, 128 (tensor)
+    # output patches: N, 3, 128, 128 (tensor, float32)
 
     img = cv2.resize(img, (m_grid * 128, m_grid * 128))
-    img_batch = np.zeros([m_grid ** 2, 3, 128, 128])
+    img_batch = np.zeros([m_grid ** 2, 3, 128, 128], np.float32)
     for y_id in range(m_grid):
         for x_id in range(m_grid):
             patch = img[y_id * 128:y_id * 128 + 128,
