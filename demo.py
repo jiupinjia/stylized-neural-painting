@@ -26,10 +26,11 @@ parser.add_argument('--with_ot_loss', action='store_true', default=False,
                     help='imporve the convergence by using optimal transportation loss')
 parser.add_argument('--beta_ot', type=float, default=0.1,
                     help='weight for optimal transportation loss (default: 0.1)')
-parser.add_argument('--net_G', type=str, default='zou-fusion-net', metavar='str',
-                    help='net_G: plain-dcgan, plain-unet, huang-net, or zou-fusion-net (default: zou-fusion-net)')
-parser.add_argument('--renderer_checkpoint_dir', type=str, default=r'./checkpoints_G_oilpaintbrush', metavar='str',
-                    help='dir to load neu-renderer (default: ./checkpoints_G_oilpaintbrush)')
+parser.add_argument('--net_G', type=str, default='zou-fusion-net-light', metavar='str',
+                    help='net_G: plain-dcgan, plain-unet, huang-net, zou-fusion-net, '
+                         'or zou-fusion-net-light (default: zou-fusion-net-light)')
+parser.add_argument('--renderer_checkpoint_dir', type=str, default=r'./checkpoints_G_oilpaintbrush_light', metavar='str',
+                    help='dir to load neu-renderer (default: ./checkpoints_G_oilpaintbrush_light)')
 parser.add_argument('--lr', type=float, default=0.005,
                     help='learning rate for stroke searching (default: 0.005)')
 parser.add_argument('--output_dir', type=str, default=r'./output', metavar='str',
@@ -60,9 +61,7 @@ def optimize_x(pt):
     pt.step_id = 0
     for pt.anchor_id in range(0, pt.m_strokes_per_block):
         pt.stroke_sampler(pt.anchor_id)
-        iters_per_stroke = 20
-        if pt.anchor_id == pt.m_strokes_per_block - 1:
-            iters_per_stroke = 40
+        iters_per_stroke = int(500 / pt.m_strokes_per_block)
         for i in range(iters_per_stroke):
 
             pt.optimizer_x.zero_grad()
@@ -72,9 +71,11 @@ def optimize_x(pt):
             pt.x_alpha.data = torch.clamp(pt.x_alpha.data, 0, 1)
 
             if args.canvas_color == 'white':
-                pt.G_pred_canvas = torch.ones([args.m_grid ** 2, 3, 128, 128]).to(device)
+                pt.G_pred_canvas = torch.ones(
+                    [args.m_grid ** 2, 3, pt.net_G.out_size, pt.net_G.out_size]).to(device)
             else:
-                pt.G_pred_canvas = torch.zeros(args.m_grid ** 2, 3, 128, 128).to(device)
+                pt.G_pred_canvas = torch.zeros(
+                    [args.m_grid ** 2, 3, pt.net_G.out_size, pt.net_G.out_size]).to(device)
 
             pt._forward_pass()
             pt._drawing_step_states()
@@ -90,8 +91,8 @@ def optimize_x(pt):
     v = pt.x.detach().cpu().numpy()
     pt._save_stroke_params(v)
     v_n = pt._normalize_strokes(pt.x)
-    pt.final_rendered_images = pt._render_on_grids(v_n)
-    pt._save_rendered_images()
+    v_n = pt._shuffle_strokes_and_reshape(v_n)
+    final_rendered_image = pt._render(v_n, save_jpgs=True, save_video=True)
 
 
 

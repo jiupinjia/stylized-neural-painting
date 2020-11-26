@@ -1,5 +1,6 @@
 import numpy as np
 import matplotlib.pyplot as plt
+import cv2
 import os
 
 import utils
@@ -131,10 +132,11 @@ class Imitator():
 
     def _compute_acc(self):
 
-        target_foreground = self.batch['B'].to(device).detach()
-        target_alpha_map = self.batch['ALPHA'].to(device).detach()
+        target_foreground = self.gt_foreground.to(device).detach()
+        target_alpha_map = self.gt_alpha.to(device).detach()
         foreground = self.G_pred_foreground.detach()
         alpha_map = self.G_pred_alpha.detach()
+
         psnr1 = utils.cpt_batch_psnr(foreground, target_foreground, PIXEL_MAX=1.0)
         psnr2 = utils.cpt_batch_psnr(alpha_map, target_alpha_map, PIXEL_MAX=1.0)
         return (psnr1 + psnr2)/2.0
@@ -154,9 +156,10 @@ class Imitator():
 
         if np.mod(self.batch_id, 1000) == 1:
             vis_pred_foreground = utils.make_numpy_grid(self.G_pred_foreground)
-            vis_gt_foreground = utils.make_numpy_grid(self.batch['B'])
+            vis_gt_foreground = utils.make_numpy_grid(self.gt_foreground)
             vis_pred_alpha = utils.make_numpy_grid(self.G_pred_alpha)
-            vis_gt_alpha = utils.make_numpy_grid(self.batch['ALPHA'])
+            vis_gt_alpha = utils.make_numpy_grid(self.gt_alpha)
+
             vis = np.concatenate([vis_pred_foreground, vis_gt_foreground,
                                   vis_pred_alpha, vis_gt_alpha], axis=0)
             vis = np.clip(vis, a_min=0.0, a_max=1.0)
@@ -207,11 +210,15 @@ class Imitator():
 
     def _backward_G(self):
 
-        gt_foreground = self.batch['B'].to(device)
-        gt_alpha = self.batch['ALPHA'].to(device)
+        self.gt_foreground = self.batch['B'].to(device)
+        self.gt_alpha = self.batch['ALPHA'].to(device)
 
-        pixel_loss1 = self._pxl_loss(self.G_pred_foreground, gt_foreground)
-        pixel_loss2 = self._pxl_loss(self.G_pred_alpha, gt_alpha)
+        _, _, h, w = self.G_pred_alpha.shape
+        self.gt_foreground = torch.nn.functional.interpolate(self.gt_foreground, (h, w), mode='area')
+        self.gt_alpha = torch.nn.functional.interpolate(self.gt_alpha, (h, w), mode='area')
+
+        pixel_loss1 = self._pxl_loss(self.G_pred_foreground, self.gt_foreground)
+        pixel_loss2 = self._pxl_loss(self.G_pred_alpha, self.gt_alpha)
         self.G_loss = 100 * (pixel_loss1 + pixel_loss2) / 2.0
         self.G_loss.backward()
 

@@ -14,7 +14,8 @@ parser.add_argument('--batch_size', type=int, default=64, metavar='N',
 parser.add_argument('--print_models', action='store_true', default=False,
                     help='visualize and print networks')
 parser.add_argument('--net_G', type=str, default='zou-fusion-net', metavar='str',
-                    help='net_G: plain-dcgan or plain-unet or huang-net or zou-fusion-net')
+                    help='net_G: plain-dcgan or plain-unet or huang-net,'
+                         'zou-fusion-net, or zou-fusion-net-light')
 parser.add_argument('--checkpoint_dir', type=str, default=r'./checkpoints_G', metavar='str',
                     help='dir to save checkpoints (default: ...)')
 parser.add_argument('--vis_dir', type=str, default=r'./val_out_G', metavar='str',
@@ -30,7 +31,6 @@ if __name__ == '__main__':
 
     dataloaders = utils.get_renderer_loaders(args)
     imt = Imitator(args=args, dataloaders=dataloaders)
-    imt.train_models()
 
     # # How to check if the data is loading correctly?
     # dataloaders = utils.get_renderer_loaders(args)
@@ -42,5 +42,7 @@ if __name__ == '__main__':
     #     print(data['B'].shape)
     #     plt.imshow(vis_B)
     #     plt.show()
+
+    imt.train_models()
 
 

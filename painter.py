@@ -33,7 +33,8 @@ class PainterBase():
 
         self.G_pred_foreground = None
         self.G_pred_alpha = None
-        self.G_final_pred_canvas = torch.zeros([1, 3, 128, 128]).to(device)
+        self.G_final_pred_canvas = torch.zeros(
+            [1, 3, self.net_G.out_size, self.net_G.out_size]).to(device)
 
         self.G_loss = torch.tensor(0.0)
         self.step_id = 0
@@ -99,8 +100,19 @@ class PainterBase():
         np.savez(file_name + '_strokes.npz', x_ctt=x_ctt,
                  x_color=x_color, x_alpha=x_alpha)
 
+    def _shuffle_strokes_and_reshape(self, v):
 
-    def _save_rendered_images(self):
+        grid_idx = list(range(self.m_grid ** 2))
+        random.shuffle(grid_idx)
+        v = v[grid_idx, :, :]
+        v = np.reshape(np.transpose(v, [1,0,2]), [-1, self.rderr.d])
+        v = np.expand_dims(v, axis=0)
+
+        return v
+
+    def _render(self, v, save_jpgs=True, save_video=True):
+
+        v = v[0,:,:]
 
         if self.input_aspect_ratio < 1:
             out_h = int(self.args.canvas_size * self.input_aspect_ratio)
@@ -109,26 +121,39 @@ class PainterBase():
             out_h = self.args.canvas_size
             out_w = int(self.args.canvas_size / self.input_aspect_ratio)
 
-        print('saving rendered images...')
         file_name = os.path.join(
             self.output_dir, self.img_path.split('/')[-1][:-4])
-        out_img = cv2.resize(self.img_, (out_w, out_h), cv2.INTER_AREA)
-        plt.imsave(file_name+'_input.png', out_img)
-        for i in range(len(self.final_rendered_images)):
-            out_img = cv2.resize(self.final_rendered_images[i], (out_w, out_h), cv2.INTER_AREA)
-            plt.imsave(file_name + '_rendered_stroke_' + str((i+1)).zfill(4) +
-                       '.png', out_img)
 
-        print('saving animated result...')
-        file_name = os.path.join(
-            self.output_dir, self.img_path.split('/')[-1][:-4]+'_animated.mp4')
-        video_writer = cv2.VideoWriter(
-            file_name, cv2.VideoWriter_fourcc(*'MP4V'), 40,
-            (out_w, out_h))
-        for i in range(len(self.final_rendered_images)):
-            frame = (self.final_rendered_images[i][:, :, ::-1] * 255.).astype(np.uint8)
-            frame = cv2.resize(frame, (out_w, out_h), cv2.INTER_AREA)
-            video_writer.write(frame)
+        if save_video:
+            video_writer = cv2.VideoWriter(
+                file_name + '_animated.mp4', cv2.VideoWriter_fourcc(*'MP4V'), 40,
+                (out_w, out_h))
+
+        print('rendering canvas...')
+        self.rderr.create_empty_canvas()
+        for i in range(v.shape[0]):  # for each stroke
+            self.rderr.stroke_params = v[i, :]
+            if self.rderr.check_stroke():
+                self.rderr.draw_stroke()
+            this_frame = self.rderr.canvas
+            this_frame = cv2.resize(this_frame, (out_w, out_h), cv2.INTER_AREA)
+            if save_jpgs:
+                plt.imsave(file_name + '_rendered_stroke_' + str((i+1)).zfill(4) +
+                           '.png', this_frame)
+            if save_video:
+                video_writer.write((this_frame[:,:,::-1] * 255.).astype(np.uint8))
+
+        if save_jpgs:
+            print('saving input photo...')
+            out_img = cv2.resize(self.img_, (out_w, out_h), cv2.INTER_AREA)
+            plt.imsave(file_name + '_input.png', out_img)
+
+        final_rendered_image = np.copy(this_frame)
+        if save_jpgs:
+            print('saving final rendered result...')
+            plt.imsave(file_name + '_final.png', final_rendered_image)
+
+        return final_rendered_image
 
 
 
@@ -192,7 +217,8 @@ class PainterBase():
 
         for i in range(self.m_grid*self.m_grid):
             this_err_map = err_maps[i,0,:,:].cpu().numpy()
-            this_err_map = cv2.blur(this_err_map, (20, 20))
+            ks = int(this_err_map.shape[0] / 8)
+            this_err_map = cv2.blur(this_err_map, (ks, ks))
             this_err_map = this_err_map ** 4
             this_img = self.img_batch[i, :, :, :].detach().permute([1, 2, 0]).cpu().numpy()
 
@@ -229,9 +255,11 @@ class PainterBase():
         self.G_pred_alphas = morphology.Erosion2d(m=1)(self.G_pred_alphas)
 
         self.G_pred_foregrounds = torch.reshape(
-            self.G_pred_foregrounds, [self.m_grid*self.m_grid, self.anchor_id+1, 3, 128, 128])
+            self.G_pred_foregrounds, [self.m_grid*self.m_grid, self.anchor_id+1, 3,
+                                      self.net_G.out_size, self.net_G.out_size])
         self.G_pred_alphas = torch.reshape(
-            self.G_pred_alphas, [self.m_grid*self.m_grid, self.anchor_id+1, 3, 128, 128])
+            self.G_pred_alphas, [self.m_grid*self.m_grid, self.anchor_id+1, 3,
+                                 self.net_G.out_size, self.net_G.out_size])
 
         for i in range(self.anchor_id+1):
             G_pred_foreground = self.G_pred_foregrounds[:, i]
@@ -257,11 +285,12 @@ class Painter(PainterBase):
         self.img_ = cv2.imread(args.img_path, cv2.IMREAD_COLOR)
         self.img_ = cv2.cvtColor(self.img_, cv2.COLOR_BGR2RGB).astype(np.float32) / 255.
         self.input_aspect_ratio = self.img_.shape[0] / self.img_.shape[1]
-        self.img_ = cv2.resize(self.img_, (128 * args.m_grid, 128 * args.m_grid), cv2.INTER_AREA)
+        self.img_ = cv2.resize(self.img_, (self.net_G.out_size * args.m_grid,
+                                           self.net_G.out_size * args.m_grid), cv2.INTER_AREA)
 
         self.m_strokes_per_block = int(args.max_m_strokes / (args.m_grid * args.m_grid))
 
-        self.img_batch = utils.img2patches(self.img_, args.m_grid).to(device)
+        self.img_batch = utils.img2patches(self.img_, args.m_grid, self.net_G.out_size).to(device)
 
         self.final_rendered_images = None
 
@@ -280,22 +309,6 @@ class Painter(PainterBase):
             cv2.imshow('input', self.img_[:, :, ::-1])
             cv2.waitKey(1)
 
-    def _render_on_grids(self, v):
-
-        rendered_imgs = []
-
-        self.rderr.create_empty_canvas()
-
-        grid_idx = list(range(self.m_grid ** 2))
-        random.shuffle(grid_idx)
-        for j in range(v.shape[1]):  # for each group of stroke
-            for i in range(len(grid_idx)):  # for each random patch
-                self.rderr.stroke_params = v[grid_idx[i], j, :]
-                if self.rderr.check_stroke():
-                    self.rderr.draw_stroke()
-                rendered_imgs.append(self.rderr.canvas)
-
-        return rendered_imgs
 
 
 
@@ -317,25 +330,8 @@ class ProgressivePainter(PainterBase):
         self.img_ = cv2.imread(args.img_path, cv2.IMREAD_COLOR)
         self.img_ = cv2.cvtColor(self.img_, cv2.COLOR_BGR2RGB).astype(np.float32) / 255.
         self.input_aspect_ratio = self.img_.shape[0] / self.img_.shape[1]
-        self.img_ = cv2.resize(self.img_, (128 * args.max_divide, 128 * args.max_divide), cv2.INTER_AREA)
-
-
-
-    def _render(self, v):
-
-        v = v[0,:,:]
-
-        rendered_imgs = []
-
-        self.rderr.create_empty_canvas()
-
-        for i in range(v.shape[0]):  # for each stroke
-            self.rderr.stroke_params = v[i, :]
-            if self.rderr.check_stroke():
-                self.rderr.draw_stroke()
-            rendered_imgs.append(self.rderr.canvas)
-
-        return rendered_imgs
+        self.img_ = cv2.resize(self.img_, (self.net_G.out_size * args.max_divide,
+                                           self.net_G.out_size * args.max_divide), cv2.INTER_AREA)
 
 
     def stroke_parser(self):
@@ -388,13 +384,18 @@ class NeuralStyleTransfer(PainterBase):
         img_ = cv2.imread(args.content_img_path, cv2.IMREAD_COLOR)
         img_ = cv2.cvtColor(img_, cv2.COLOR_BGR2RGB).astype(np.float32) / 255.
         self.input_aspect_ratio = img_.shape[0] / img_.shape[1]
-        self.img_ = cv2.resize(img_, (128*self.m_grid, 128*self.m_grid), cv2.INTER_AREA)
-        self.img_batch = utils.img2patches(self.img_, self.m_grid).to(device)
+        self.img_ = cv2.resize(img_, (self.net_G.out_size*self.m_grid,
+                                      self.net_G.out_size*self.m_grid), cv2.INTER_AREA)
+        self.img_batch = utils.img2patches(self.img_, self.m_grid, self.net_G.out_size).to(device)
 
         style_img = cv2.imread(args.style_img_path, cv2.IMREAD_COLOR)
         self.style_img_ = cv2.cvtColor(style_img, cv2.COLOR_BGR2RGB).astype(np.float32) / 255.
         self.style_img = cv2.blur(cv2.resize(self.style_img_, (128, 128)), (2, 2))
         self.style_img = torch.tensor(self.style_img).permute([2, 0, 1]).unsqueeze(0).to(device)
+
+        self.content_img_path = args.content_img_path
+        self.img_path = args.content_img_path
+        self.style_img_path = args.style_img_path
 
 
     def _style_transfer_step_states(self):
@@ -407,6 +408,7 @@ class NeuralStyleTransfer(PainterBase):
         else:
             cv2.imshow('G_pred', vis2[:,:,::-1])
             cv2.imshow('input', self.img_[:, :, ::-1])
+            cv2.imshow('style_img', self.style_img_[:, :, ::-1])
             cv2.waitKey(1)
 
 
@@ -437,7 +439,7 @@ class NeuralStyleTransfer(PainterBase):
         return rendered_imgs
 
 
-    def _save_style_transfer_images(self):
+    def _save_style_transfer_images(self, final_rendered_image):
 
         if self.input_aspect_ratio < 1:
             out_h = int(self.args.canvas_size * self.input_aspect_ratio)
@@ -449,12 +451,12 @@ class NeuralStyleTransfer(PainterBase):
         print('saving style transfer results...')
 
         file_dir = os.path.join(
-            self.output_dir, self.args.content_img_path.split('/')[-1][:-4])
+            self.output_dir, self.content_img_path.split('/')[-1][:-4])
 
         out_img = cv2.resize(self.style_img_, (out_w, out_h), cv2.INTER_AREA)
         plt.imsave(file_dir + '_style_img_' +
-                   self.args.style_img_path.split('/')[-1][:-4] + '.png', out_img)
+                   self.style_img_path.split('/')[-1][:-4] + '.png', out_img)
 
-        out_img = cv2.resize(self.final_rendered_images[-1], (out_w, out_h), cv2.INTER_AREA)
+        out_img = cv2.resize(final_rendered_image, (out_w, out_h), cv2.INTER_AREA)
         plt.imsave(file_dir + '_style_transfer_' +
-                   self.args.style_img_path.split('/')[-1][:-4] + '.png', out_img)
+                   self.style_img_path.split('/')[-1][:-4] + '.png', out_img)

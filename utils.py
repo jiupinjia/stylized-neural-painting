@@ -95,8 +95,13 @@ class PairedDataAugmentation:
 
 class StrokeDataset(Dataset):
 
-    def __init__(self, renderer_type, is_train=True):
-        self.rderr = renderer.Renderer(renderer=renderer_type, CANVAS_WIDTH=128, train=True)
+    def __init__(self, args, is_train=True):
+        if '-light' in args.net_G:
+            CANVAS_WIDTH = 32
+        else:
+            CANVAS_WIDTH = 128
+        self.rderr = renderer.Renderer(
+            renderer=args.renderer, CANVAS_WIDTH=CANVAS_WIDTH, train=True)
         self.is_train = is_train
 
     def __len__(self):
@@ -128,8 +133,8 @@ class StrokeDataset(Dataset):
 
 def get_renderer_loaders(args):
 
-    training_set = StrokeDataset(renderer_type=args.renderer, is_train=True)
-    val_set = StrokeDataset(renderer_type=args.renderer, is_train=False)
+    training_set = StrokeDataset(args, is_train=True)
+    val_set = StrokeDataset(args, is_train=False)
 
     datasets = {'train': training_set, 'val': val_set}
     dataloaders = {x: DataLoader(datasets[x], batch_size=args.batch_size,
@@ -233,16 +238,16 @@ def rotate_pt(pt, rotate_center, theta, return_int=True):
     return pt_
 
 
-def img2patches(img, m_grid, to_tensor=True):
+def img2patches(img, m_grid, s, to_tensor=True):
     # input img: h, w, 3 (np.float32)
-    # output patches: N, 3, 128, 128 (tensor, float32)
+    # output patches: N, 3, s, s (tensor, float32)
 
-    img = cv2.resize(img, (m_grid * 128, m_grid * 128))
-    img_batch = np.zeros([m_grid ** 2, 3, 128, 128], np.float32)
+    img = cv2.resize(img, (m_grid * s, m_grid * s))
+    img_batch = np.zeros([m_grid ** 2, 3, s, s], np.float32)
     for y_id in range(m_grid):
         for x_id in range(m_grid):
-            patch = img[y_id * 128:y_id * 128 + 128,
-                    x_id * 128:x_id * 128 + 128, :].transpose([2, 0, 1])
+            patch = img[y_id * s:y_id * s + s,
+                    x_id * s:x_id * s + s, :].transpose([2, 0, 1])
             img_batch[y_id * m_grid + x_id, :, :, :] = patch
 
     if to_tensor:
@@ -253,15 +258,16 @@ def img2patches(img, m_grid, to_tensor=True):
 
 
 def patches2img(img_batch, m_grid, to_numpy=True):
-    # input patches: m_grid**2, 3, 128, 128 (tensor)
-    # output img: 128*m_grid, 128*m_grid, 3 (np.float32)
+    # input img_batch: m_grid**2, 3, s, s (tensor)
+    # output img: s*m_grid, s*m_grid, 3 (np.float32)
 
-    img = torch.zeros([128*m_grid, 128*m_grid, 3])
+    _, _, s, _ = img_batch.shape
+    img = torch.zeros([s*m_grid, s*m_grid, 3])
 
     for y_id in range(m_grid):
         for x_id in range(m_grid):
             patch = img_batch[y_id * m_grid + x_id, :, :, :]
-            img[y_id * 128:y_id * 128 + 128, x_id * 128:x_id * 128 + 128, :] \
+            img[y_id * s:y_id * s + s, x_id * s:x_id * s + s, :] \
                 = patch.permute([1, 2, 0])
     if to_numpy:
         img = img.detach().numpy()
