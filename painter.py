@@ -10,7 +10,6 @@ import morphology
 import renderer
 
 import torch
-torch.cuda.current_device()
 
 # Decide which device we want to run on
 device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
@@ -66,8 +65,8 @@ class PainterBase():
                 self.renderer_checkpoint_dir, 'last_ckpt.pt'))):
             print('loading renderer from pre-trained checkpoint...')
             # load the entire checkpoint
-            checkpoint = torch.load(os.path.join(
-                self.renderer_checkpoint_dir, 'last_ckpt.pt'))
+            checkpoint = torch.load(os.path.join(self.renderer_checkpoint_dir, 'last_ckpt.pt'),
+                                map_location=None if torch.cuda.is_available() else device)
             # update net_G states
             self.net_G.load_state_dict(checkpoint['model_G_state_dict'])
             self.net_G.to(device)

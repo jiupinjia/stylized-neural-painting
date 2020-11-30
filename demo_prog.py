@@ -1,7 +1,5 @@
 import argparse
-
 import torch
-torch.cuda.current_device()
 import torch.optim as optim
 
 from painter import *

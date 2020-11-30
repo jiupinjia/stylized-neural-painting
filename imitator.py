@@ -8,7 +8,6 @@ import loss
 from networks import *
 
 import torch
-torch.cuda.current_device()
 import torch.optim as optim
 from torch.optim import lr_scheduler
 import torch.nn as nn

@@ -1,5 +1,4 @@
 import torch
-torch.cuda.current_device()
 import torch.nn as nn
 import torchvision
 import utils
