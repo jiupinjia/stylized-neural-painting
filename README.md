@@ -28,6 +28,12 @@ The implementation of the sinkhorn loss in our code is partially adapted from th
 
 
 
+## **Updates on CPU mode (Nov 29, 2020)
+
+PyTorch-CPU mode is now supported! You can try out on your local machine without any GPU cards.
+
+
+
 
 ## **Updates on lightweight renderers (Nov 26, 2020)
 
