@@ -304,6 +304,8 @@ class Painter(PainterBase):
         if self.args.disable_preview:
             pass
         else:
+            cv2.namedWindow('G_pred', cv2.WINDOW_NORMAL)
+            cv2.namedWindow('input', cv2.WINDOW_NORMAL)
             cv2.imshow('G_pred', vis2[:,:,::-1])
             cv2.imshow('input', self.img_[:, :, ::-1])
             cv2.waitKey(1)
@@ -352,6 +354,8 @@ class ProgressivePainter(PainterBase):
         if self.args.disable_preview:
             pass
         else:
+            cv2.namedWindow('G_pred', cv2.WINDOW_NORMAL)
+            cv2.namedWindow('input', cv2.WINDOW_NORMAL)
             cv2.imshow('G_pred', vis2[:,:,::-1])
             cv2.imshow('input', self.img_[:, :, ::-1])
             cv2.waitKey(1)
@@ -405,6 +409,9 @@ class NeuralStyleTransfer(PainterBase):
         if self.args.disable_preview:
             pass
         else:
+            cv2.namedWindow('G_pred', cv2.WINDOW_NORMAL)
+            cv2.namedWindow('input', cv2.WINDOW_NORMAL)
+            cv2.namedWindow('style_img', cv2.WINDOW_NORMAL)
             cv2.imshow('G_pred', vis2[:,:,::-1])
             cv2.imshow('input', self.img_[:, :, ::-1])
             cv2.imshow('style_img', self.style_img_[:, :, ::-1])
