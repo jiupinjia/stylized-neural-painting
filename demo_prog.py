@@ -13,7 +13,9 @@ parser.add_argument('--renderer', type=str, default='oilpaintbrush', metavar='st
 parser.add_argument('--canvas_color', type=str, default='black', metavar='str',
                     help='canvas_color: [black, white] (default black)')
 parser.add_argument('--canvas_size', type=int, default=512, metavar='str',
-                    help='size ( max(w, h) ) of the canvas for stroke rendering')
+                    help='size of the canvas for stroke rendering')
+parser.add_argument('--keep_aspect_ratio', action='store_true', default=False,
+                    help='keep input aspect ratio when saving outputs')
 parser.add_argument('--max_m_strokes', type=int, default=500, metavar='str',
                     help='max number of strokes (default 500)')
 parser.add_argument('--max_divide', type=int, default=5, metavar='N',

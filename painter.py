@@ -112,13 +112,16 @@ class PainterBase():
     def _render(self, v, save_jpgs=True, save_video=True):
 
         v = v[0,:,:]
-
-        if self.input_aspect_ratio < 1:
-            out_h = int(self.args.canvas_size * self.input_aspect_ratio)
-            out_w = self.args.canvas_size
+        if self.args.keep_aspect_ratio:
+            if self.input_aspect_ratio < 1:
+                out_h = int(self.args.canvas_size * self.input_aspect_ratio)
+                out_w = self.args.canvas_size
+            else:
+                out_h = self.args.canvas_size
+                out_w = int(self.args.canvas_size / self.input_aspect_ratio)
         else:
             out_h = self.args.canvas_size
-            out_w = int(self.args.canvas_size / self.input_aspect_ratio)
+            out_w = self.args.canvas_size
 
         file_name = os.path.join(
             self.output_dir, self.img_path.split('/')[-1][:-4])
@@ -447,12 +450,16 @@ class NeuralStyleTransfer(PainterBase):
 
     def _save_style_transfer_images(self, final_rendered_image):
 
-        if self.input_aspect_ratio < 1:
-            out_h = int(self.args.canvas_size * self.input_aspect_ratio)
-            out_w = self.args.canvas_size
+        if self.args.keep_aspect_ratio:
+            if self.input_aspect_ratio < 1:
+                out_h = int(self.args.canvas_size * self.input_aspect_ratio)
+                out_w = self.args.canvas_size
+            else:
+                out_h = self.args.canvas_size
+                out_w = int(self.args.canvas_size / self.input_aspect_ratio)
         else:
             out_h = self.args.canvas_size
-            out_w = int(self.args.canvas_size / self.input_aspect_ratio)
+            out_w = self.args.canvas_size
 
         print('saving style transfer results...')
 

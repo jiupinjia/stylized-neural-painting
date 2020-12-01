@@ -20,7 +20,9 @@ parser.add_argument('--transfer_mode', type=int, default=1, metavar='N',
 parser.add_argument('--canvas_color', type=str, default='black', metavar='str',
                     help='canvas_color: [black, white] (default black)')
 parser.add_argument('--canvas_size', type=int, default=512, metavar='str',
-                    help='size ( max(w, h) ) of the canvas for stroke rendering')
+                    help='size of the canvas for stroke rendering')
+parser.add_argument('--keep_aspect_ratio', action='store_true', default=False,
+                    help='keep input aspect ratio when saving outputs')
 parser.add_argument('--beta_L1', type=float, default=1.0,
                     help='weight for L1 loss (default: 1.0)')
 parser.add_argument('--beta_sty', type=float, default=0.5,
