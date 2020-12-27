@@ -6,8 +6,9 @@ spec:
   cpu: False
 build_steps:
   - apt-get update
-  - apt-get install -y libboost-all-dev unzip
+  - apt-get install -y libboost-all-dev
   - apt-get install -y cmake
+  - apt-get install ffmpeg libsm6 libxext6 unzip -y
   - pip install -r Requirements.txt
-  - gdown https://drive.google.com/uc?id=1kcXsx2nDF3b3ryYOwm3BjmfwET9lfFht
-  - unzip checkpoints_G_oilpaintbrush_light.zip
+  - gdown https://drive.google.com/uc?id=1sqWhgBKqaBJggl2A8sD1bLSq2_B1ScMG
+  - unzip checkpoints_G_oilpaintbrush.zip
