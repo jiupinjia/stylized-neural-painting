@@ -7,6 +7,7 @@ import runway
 from painter import *
 # Decide which device we want to run on
 device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
+from PIL import Image
 
 # settings
 parser = argparse.ArgumentParser(description='STYLIZED NEURAL PAINTING')
