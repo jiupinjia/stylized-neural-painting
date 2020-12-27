@@ -7,3 +7,5 @@ torch
 torchvision
 opencv-python
 opencv-contrib-python
+runway-python
+gdown

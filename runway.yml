@@ -1,0 +1,13 @@
+entrypoint: python runway_model.py
+python: 3.6
+cuda: 9.2
+spec:
+  gpu: True
+  cpu: False
+build_steps:
+  - apt-get update
+  - apt-get install -y libboost-all-dev unzip
+  - apt-get install -y cmake
+  - pip install -r Requirements.txt
+  - gdown https://drive.google.com/uc?id=1kcXsx2nDF3b3ryYOwm3BjmfwET9lfFht
+  - unzip checkpoints_G_oilpaintbrush_light.zip
