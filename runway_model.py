@@ -96,7 +96,7 @@ def translate(learn, inputs):
     inputs['source_imgs'].save('images/temp.jpg')
     paths = os.path.join('images','temp.jpg')
     args.img_path = paths
-    args.max_m_strokes = inputs['amount']
+    args.max_m_strokes = inputs['Strokes']
     pt = ProgressivePainter(args=args)
     final_rendered_image = optimize_x(pt)
     formatted = (final_rendered_image * 255 / np.max(final_rendered_image)).astype('uint8')
