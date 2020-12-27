@@ -16,7 +16,6 @@ args.renderer = 'oilpaintbrush' # [watercolor, markerpen, oilpaintbrush, rectang
 args.canvas_color = 'black' # [black, white]
 args.canvas_size = 512 # size of the canvas for stroke rendering'
 args.keep_aspect_ratio = False # whether to keep input aspect ratio when saving outputs
-args.max_m_strokes = 100 # max number of strokes
 args.max_divide = 5 # divide an image up-to max_divide x max_divide patches
 args.beta_L1 = 1.0 # weight for L1 loss
 args.with_ot_loss = False # set True for imporving the convergence by using optimal transportation loss, but will slow-down the speed
@@ -90,12 +89,14 @@ def optimize_x(pt):
 
     return final_rendered_image
 
-@runway.command('translate', inputs={'source_imgs': runway.image(description='input image to be translated'),}, outputs={'image': runway.image(description='output image containing the translated result')})
+@runway.command('translate', inputs={'source_imgs': runway.image(description='input image to be translated'), 'amount': runway.number(min=0, max=700, default=100)
+}, outputs={'image': runway.image(description='output image containing the translated result')})
 def translate(learn, inputs):
     os.makedirs('images', exist_ok=True)
     inputs['source_imgs'].save('images/temp.jpg')
     paths = os.path.join('images','temp.jpg')
     args.img_path = paths
+    args.max_m_strokes = inputs['amount']
     pt = ProgressivePainter(args=args)
     final_rendered_image = optimize_x(pt)
     formatted = (final_rendered_image * 255 / np.max(final_rendered_image)).astype('uint8')
