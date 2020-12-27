@@ -15,7 +15,7 @@ args.renderer = 'oilpaintbrush' # [watercolor, markerpen, oilpaintbrush, rectang
 args.canvas_color = 'black' # [black, white]
 args.canvas_size = 512 # size of the canvas for stroke rendering'
 args.keep_aspect_ratio = False # whether to keep input aspect ratio when saving outputs
-args.max_m_strokes = 500 # max number of strokes
+args.max_m_strokes = 100 # max number of strokes
 args.max_divide = 5 # divide an image up-to max_divide x max_divide patches
 args.beta_L1 = 1.0 # weight for L1 loss
 args.with_ot_loss = False # set True for imporving the convergence by using optimal transportation loss, but will slow-down the speed
@@ -97,7 +97,9 @@ def translate(learn, inputs):
     args.img_path = paths
     pt = ProgressivePainter(args=args)
     final_rendered_image = optimize_x(pt)
-    return final_rendered_image
+    formatted = (final_rendered_image * 255 / np.max(final_rendered_image)).astype('uint8')
+    img = Image.fromarray(formatted)
+    return img
 
 
 if __name__ == '__main__':
