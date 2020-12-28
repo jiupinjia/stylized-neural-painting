@@ -89,7 +89,7 @@ def optimize_x(pt):
 
     return final_rendered_image
 
-@runway.command('translate', inputs={'source_imgs': runway.image(description='input image to be translated'), 'Strokes': runway.number(min=0, max=700, default=100,description='number of strokes')
+@runway.command('translate', inputs={'source_imgs': runway.image(description='input image to be translated'), 'Strokes': runway.number(min=100, max=700, default=100,description='number of strokes')
 }, outputs={'image': runway.image(description='output image containing the translated result')})
 def translate(learn, inputs):
     os.makedirs('images', exist_ok=True)
