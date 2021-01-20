@@ -92,7 +92,7 @@ class Renderer():
             # x0, y0, x1, y1, x2, y2, radius0, radius2, R, G, B, A
             x0, y0, x1, y1, x2, y2 = cx, cy, cx, cy, cx, cy
             x = [x0, y0, x1, y1, x2, y2]
-            r = _random_floats(0.1, 0.5, 2)
+            r = _random_floats(0.1, 0.25, 2)
             color = img[int(cy*map_h), int(cx*map_w), :].tolist()
             alpha = _random_floats(0.8, 0.98, 1)
             self.stroke_params = np.array(x + r + color + alpha, dtype=np.float32)
@@ -100,7 +100,7 @@ class Renderer():
             # x0, y0, x1, y1, x2, y2, radius0, radius2, R0, G0, B0, R2, G2, B2, A
             x0, y0, x1, y1, x2, y2 = cx, cy, cx, cy, cx, cy
             x = [x0, y0, x1, y1, x2, y2]
-            r = _random_floats(0.1, 0.5, 2)
+            r = _random_floats(0.1, 0.25, 2)
             color = img[int(cy*map_h), int(cx*map_w), :].tolist()
             color = color + color
             alpha = _random_floats(0.98, 1.0, 1)
@@ -108,7 +108,7 @@ class Renderer():
         elif self.renderer in ['oilpaintbrush']:
             # xc, yc, w, h, theta, R0, G0, B0, R2, G2, B2, A
             x = [cx, cy]
-            wh = _random_floats(0.1, 0.5, 2)
+            wh = _random_floats(0.1, 0.25, 2)
             theta = _random_floats(0, 1, 1)
             color = img[int(cy*map_h), int(cx*map_w), :].tolist()
             color = color + color
@@ -117,7 +117,7 @@ class Renderer():
         elif self.renderer in ['rectangle']:
             # xc, yc, w, h, theta, R, G, B, A
             x = [cx, cy]
-            wh = _random_floats(0.1, 0.5, 2)
+            wh = _random_floats(0.1, 0.25, 2)
             theta = [0]
             color = img[int(cy*map_h), int(cx*map_w), :].tolist()
             alpha = _random_floats(0.8, 0.98, 1)
