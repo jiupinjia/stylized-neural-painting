@@ -32,7 +32,7 @@ parser.add_argument('--net_G', type=str, default='zou-fusion-net-light', metavar
                          'or zou-fusion-net-light (default: zou-fusion-net-light)')
 parser.add_argument('--renderer_checkpoint_dir', type=str, default=r'./checkpoints_G_oilpaintbrush_light', metavar='str',
                     help='dir to load neu-renderer (default: ./checkpoints_G_oilpaintbrush_light)')
-parser.add_argument('--lr', type=float, default=0.005,
+parser.add_argument('--lr', type=float, default=0.002,
                     help='learning rate for stroke searching (default: 0.005)')
 parser.add_argument('--output_dir', type=str, default=r'./output', metavar='str',
                     help='dir to save style transfer results (default: ./output)')
